@@ -9,16 +9,32 @@
 // acks the round in the journal so the intuition server skips its headless
 // fallback agent (omp -p -r <session>).
 //
-// Remove this file to uninstall. Override the script location with
-// INTUITION_SCRIPT.
+// Remove this file to uninstall. The script is found next to this file's
+// realpath (install via symlink); INTUITION_SCRIPT overrides.
 
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { spawn } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync, realpathSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const SCRIPT = process.env.INTUITION_SCRIPT ?? join(homedir(), "code/intuition/intuition.ts");
+/**
+ * Locate intuition.ts: INTUITION_SCRIPT if set, else the file sitting next to
+ * this extension's realpath — a symlinked install resolves back into the
+ * cloned repo, wherever it lives.
+ */
+function resolveScript(): string | null {
+  const env = process.env.INTUITION_SCRIPT;
+  if (env) return existsSync(env) ? env : null;
+  try {
+    const sibling = join(dirname(realpathSync(fileURLToPath(import.meta.url))), "intuition.ts");
+    return existsSync(sibling) ? sibling : null;
+  } catch {
+    return null;
+  }
+}
+
+const SCRIPT = resolveScript();
 
 /** Stable per-repo port (FNV-1a over cwd), so parallel repos get their own dashboards. */
 function portFor(cwd: string): number {
@@ -42,7 +58,7 @@ async function repoServedAt(port: number): Promise<string | null> {
 
 /** Ensure a live server for repo; returns the port serving it, or null. */
 async function ensureServer(repo: string): Promise<number | null> {
-  if (!existsSync(SCRIPT)) return null;
+  if (SCRIPT === null) return null;
   let port = portFor(repo);
   for (let attempt = 0; attempt < 5; attempt++, port++) {
     const served = await repoServedAt(port);

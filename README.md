@@ -15,8 +15,8 @@ did the work addresses every comment.
 ## Requirements
 
 - [bun](https://bun.sh)
-- [omp](https://github.com/oh-my-pi/pi-coding-agent) — sessions to mine, and
-  the agent that addresses reviews
+- [omp](https://github.com/can1357/oh-my-pi) — sessions to mine, and the
+  agent that addresses reviews
 - git (optional; enables durable diffs vs HEAD)
 
 ## Quickstart
@@ -36,12 +36,13 @@ The extension keeps a dashboard running for every repo you work in and routes
 submitted reviews into your live omp session:
 
 ```sh
-git clone <this repo> ~/code/intuition
-cp ~/code/intuition/extension.ts ~/.omp/agent/extensions/intuition.ts
+git clone <this repo> intuition   # anywhere works
+ln -s "$(pwd)/intuition/extension.ts" ~/.omp/agent/extensions/intuition.ts
 ```
 
-If the repo lives somewhere other than `~/code/intuition`, set
-`INTUITION_SCRIPT=/path/to/intuition.ts` in your environment.
+Symlink, don't copy — the extension follows its own symlink back into the
+clone to find `intuition.ts`, so no configuration is needed. If you must copy
+the file instead, set `INTUITION_SCRIPT=/path/to/intuition.ts`.
 
 What the plugin does:
 
